@@ -170,8 +170,8 @@ class ID3:
 colnames = ['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety', 'label']
 attribute = ['buying','maint','doors','persons','lug_boot','safety']
 label_values = ['unacc', 'acc', 'good', 'vgood']
-dataset = pd.read_csv("train.csv",names=colnames)
-testdataset = pd.read_csv("test.csv",names = colnames)
+dataset = pd.read_csv("car_dataset/train.csv",names=colnames)
+testdataset = pd.read_csv("car_dataset/test.csv",names = colnames)
 
 #decision tree depth - 1 to 6
 max_depth = int(input("Enter the max depth of the tree: "))

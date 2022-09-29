@@ -183,8 +183,8 @@ colnames = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing
 attribute = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing','loan','contact','day','month',
             'duration','campaign','pdays','previous','poutcome']
 label_values = ['yes','no']
-dataset = pd.read_csv("train.csv",names=colnames)
-testdataset = pd.read_csv("test.csv",names = colnames)
+dataset = pd.read_csv("bank_dataset/train.csv",names=colnames)
+testdataset = pd.read_csv("bank_dataset/test.csv",names = colnames)
 max_depth = int(input("Enter the max depth of the tree: "))
 
 for i in dataset.columns[dataset.dtypes == 'int64']:
