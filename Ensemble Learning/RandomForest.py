@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import pandas as pd
-import statistics as st
+import matplotlib.pyplot as plt
 from collections import Counter
 '''
 features and its values
@@ -168,9 +168,10 @@ class ID3:
         return predictedlabels
 
 class RandomForest:
-    def __init__(self,no_of_trees):
+    def __init__(self,no_of_trees,feature_size):
         self.trees = no_of_trees
         self.models = []
+        self.features_size = feature_size
 
     def fit(self,dataset):
         attributeList = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan', 'contact',
@@ -178,11 +179,10 @@ class RandomForest:
                          'duration', 'campaign', 'pdays', 'previous', 'poutcome']
         for i in range(self.trees):
             arr = np.random.uniform(0,dataset.shape[0],int(0.6*dataset.shape[0]))
-            indexes = [int(i) for i in arr]
-            #print(arr)
+            indexes = [int(j) for j in arr]
             new_dataset = dataset.iloc[indexes]
             tree = ID3(None,0)
-            tree.fit(new_dataset,copy.deepcopy(attributeList),0,2)
+            tree.fit(new_dataset,copy.deepcopy(attributeList),0,self.features_size)
             self.models.append(tree)
 
     @staticmethod
@@ -223,13 +223,32 @@ if __name__ == '__main__':
     for i in testdataset.columns[testdataset.dtypes == 'int64']:
         testdataset[i] = testdataset[i].apply(lambda x: 1 if x > testdataset[i].median() else 0)
     print("T             training errors           test errors")
-    trainingerror = []
-    testerrors = []
-    for i in range(1, 20):
-        rf = RandomForest(i)
-        rf.fit(dataset)
-        predictedlabels_train = rf.testdataset(dataset)
-        predictedlabels_test = rf.testdataset(testdataset)
-        trainingerror.append(RandomForest.calculateErrors(predictedlabels_train, dataset['y']))
-        testerrors.append(RandomForest.calculateErrors(predictedlabels_test, testdataset['y']))
-        print(i,"           ","%.4f"%trainingerror[i-1],"                   ","%.4f"%testerrors[i-1])
+    trainingerror = {}
+    testerrors = {}
+    featuresize = [2,4,6]
+    T = [x for x in range(1,501)]
+
+    for j in featuresize:
+        trainingerror[j] = []
+        testerrors[j] = []
+        for i in range(1,501):
+            rf = RandomForest(i,j)
+            rf.fit(dataset)
+            predictedlabels_train = rf.testdataset(dataset)
+            predictedlabels_test = rf.testdataset(testdataset)
+            trainingerror[j].append(RandomForest.calculateErrors(predictedlabels_train, dataset['y']))
+            testerrors[j].append(RandomForest.calculateErrors(predictedlabels_test, testdataset['y']))
+            print(i,"           ","%.4f"%trainingerror[j][i-1],"                   ","%.4f"%testerrors[j][i-1])
+        print("training error ",j," ",trainingerror[j])
+        print("test error ",j," ",testerrors[j])
+    plt.plot(T,trainingerror[2],color = 'dodgerblue',label = "Training Errors feature-size=2")
+    plt.plot(T, trainingerror[4], color='cadetblue', label="Training Errors feature-size=4")
+    plt.plot(T, trainingerror[6], color='aqua', label="Training Errors feature-size=6")
+    plt.plot(T,testerrors[2],color = 'red',label = "Test Error feature-size=2")
+    plt.plot(T, testerrors[4], color='maroon', label="Test Error feature-size=4")
+    plt.plot(T, testerrors[6], color='lightcoral', label="Test Error feature-size=6")
+    plt.xlabel('No of trees in bagging (T)')
+    plt.ylabel('Errors')
+    plt.title("T vs Training/Test error")
+    plt.legend()
+    plt.show()
