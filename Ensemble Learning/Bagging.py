@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import statistics as st
 from collections import Counter
+import matplotlib.pyplot as plt
 '''
 features and its values
 used while predicting
@@ -226,7 +227,8 @@ if __name__ == '__main__':
     print("T             training errors           test errors")
     trainingerror = []
     testerrors = []
-    for i in range(1, 50):
+    T = [0,50,100,150,200,250,300,350,400,450,500]
+    for i in range(1, 500):
         bg = Bagging(i)
         bg.fit(dataset)
         predictedlabels_train = bg.testdataset(dataset)
@@ -234,10 +236,10 @@ if __name__ == '__main__':
         trainingerror.append(Bagging.calculateErrors(predictedlabels_train, dataset['y']))
         testerrors.append(Bagging.calculateErrors(predictedlabels_test, testdataset['y']))
         print(i,"           ","%.4f"%trainingerror[i-1],"                   ","%.4f"%testerrors[i-1])
-'''    bg = Bagging(50)
-    bg.fit(dataset)
-    predictedlabels_train = bg.testdataset(dataset)
-    predictedlabels_test = bg.testdataset(testdataset)
-    print(Bagging.calculateErrors(predictedlabels_train, dataset['y']))
-    print(Bagging.calculateErrors(predictedlabels_test, testdataset['y']))'''
-
+    plt.plot(T,trainingerror,color = 'blue',label = "Training Errors")
+    plt.plot(T,testerrors,color = 'red',label = "Test Error")
+    plt.xlabel('No of trees in bagging (T)')
+    plt.ylabel('Errors')
+    plt.title("T vs Training/Test error")
+    plt.legend()
+    plt.show()
