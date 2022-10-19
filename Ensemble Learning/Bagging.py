@@ -227,8 +227,8 @@ if __name__ == '__main__':
     print("T             training errors           test errors")
     trainingerror = []
     testerrors = []
-    T = [0,50,100,150,200,250,300,350,400,450,500]
-    for i in range(1, 500):
+    T = [x for x in range(1,501)]
+    for i in range(1, 501):
         bg = Bagging(i)
         bg.fit(dataset)
         predictedlabels_train = bg.testdataset(dataset)
