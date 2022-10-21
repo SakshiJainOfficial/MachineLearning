@@ -223,6 +223,7 @@ class Adaboost:
         self.decisionstumps = []
         self.training_iterations = iterations
         self.decisionstumps_errors = []
+        self.decisionstumps_testerror = []
 
     def fit(self, data):
         weights = [1/data.shape[0] for i in range(data.shape[0])]
@@ -238,16 +239,6 @@ class Adaboost:
             predictedint = [1 if lable == "yes" else -1 for lable in predictedlabels]
             targetlabels = [1 if lable == "yes" else -1 for lable in data['y']]
             self.decisionstumps_errors.append(self.calculateErrors(predictedint,targetlabels))
-            '''for y in range(len(predictedlabels)):
-                if predictedlabels[y] == "yes":
-                    predictedint.append(1)
-                else:
-                    predictedint.append(-1)
-                if data['y'][y] == "yes":
-                    targetlabels.append(1)
-                else:
-                    targetlabels.append(-1)'''
-            #error_sum = 0
             error = sum(weights * (np.not_equal(targetlabels,predictedint)).astype(int))
             self.modelweights.append(1/2 * np.log((1-error)/error))
             weights = [weights[x] * np.exp(-self.modelweights[i]*predictedint[x]*targetlabels[x]) for x in range(len(weights))]
@@ -266,15 +257,8 @@ class Adaboost:
         for i in range(len(testdataset)):
             for j in range(len(self.decisionstumps)):
                 predictions.append(self.predict(testdataset.iloc[i], self.decisionstumps[j].root))
-                '''if predictions[j] == "yes":
-                    predicted.append(1)
-                else:
-                    predicted.append(-1)'''
             predicted = [1 if label == "yes" else -1 for label in predictions]
-            #sum_predicted = 0
             sum_predicted = np.dot(predicted,self.modelweights)
-            '''for y in range(len(predictions)):
-                sum_predicted += predicted[y] * self.modelweights[y]'''
             predictedlabels.append(np.sign(sum_predicted))
             if sum_predicted>0:
                 #predictedlabels.append(1)
@@ -307,9 +291,9 @@ if __name__ == '__main__':
     print("T             training errors           test errors")
     trainingerror = []
     testerrors = []
-    T = [x for x in range(1,10)]
+    T = [x for x in range(1,501)]
     obj = None
-    for i in range(1, 10):
+    for i in range(1, 501):
         ad = Adaboost(i)
         ad.fit(dataset)
         predictedlabels_train = ad.testdataset(dataset)
@@ -318,6 +302,17 @@ if __name__ == '__main__':
         testerrors.append(Adaboost.calculateErrors(predictedlabels_test, testdataset['y']))
         print(i,"           ","%.4f"%trainingerror[i-1],"                   ","%.4f"%testerrors[i-1])
         obj = ad
+    predictedlabels_ds = []
+    for i in range(obj.training_iterations):
+        for j in range(len(testdataset)):
+            predictedlabels_ds.append(obj.decisionstumps[i].predict(testdataset.iloc[j], obj.decisionstumps[i].root))
+        predictedint = [1 if lable == "yes" else -1 for lable in predictedlabels_ds]
+        targetlabels = [1 if lable == "yes" else -1 for lable in testdataset['y']]
+        obj.decisionstumps_testerror.append(Adaboost.calculateErrors(predictedint, targetlabels))
+    print(obj.decisionstumps_testerror)
+    print(obj.decisionstumps_errors)
+    print(trainingerror)
+    print(testerrors)
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
     ax1.plot(T, trainingerror, color='blue', label="Training Errors")
