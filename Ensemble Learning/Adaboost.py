@@ -150,12 +150,6 @@ class ID3:
             node = TreeNode(None,depth,True,None)
             if len(labels) != 0:
                 node.label = labels[counts == counts.max()][0]
-            '''    maxcount = -1
-                for i in range(len(counts)):
-                    if counts[i] > maxcount:
-                        maxcount = counts[i]
-                        leaflabel = labels[i]
-                        node.label = leaflabel'''
             return node
         if depth == self.maxdepth: # third base case - if maximum depth is reached - create leaf node
             node = TreeNode(None, depth, True, None)
@@ -169,11 +163,6 @@ class ID3:
                     if maxsum < label_weightage:
                         node.label = i
                         maxsum = label_weightage
-                '''for i in range(len(counts)):
-                    if counts[i] > maxcount:
-                        maxcount = counts[i]
-                        leaflabel = labels[i]
-                        node.label = leaflabel'''
             return node
         if len(data) == 0: # fourth base case - No data present - create leaf node with maximum labels as output
             return TreeNode(None,depth,True,None)
@@ -192,7 +181,6 @@ class ID3:
             attr = copy.deepcopy(attributeList)
             child = self.fit(new_data,attr,depth+1,weights) # recursively calling the function to create tree for the branch
             if child.isleaf is True and child.label is None:
-                maxcount = -1
                 maxsum = 0
                 for i in labels:
                     index = data.index[data['y'] == i]
@@ -201,11 +189,6 @@ class ID3:
                     if maxsum < label_weightage:
                         child.label = i
                         maxsum = label_weightage
-                '''for i in range(len(counts)):
-                    if counts[i] > maxcount:
-                        maxcount = counts[i]
-                        leaflabel = labels[i]
-                        child.label = leaflabel'''
             node.children[value] = child
         return node
 
@@ -239,6 +222,7 @@ class Adaboost:
         self.modelweights = []
         self.decisionstumps = []
         self.training_iterations = iterations
+        self.decisionstumps_errors = []
 
     def fit(self, data):
         weights = [1/data.shape[0] for i in range(data.shape[0])]
@@ -253,7 +237,7 @@ class Adaboost:
                 predictedlabels.append(decisionStump.predict(data.iloc[j],self.decisionstumps[i].root))
             predictedint = [1 if lable == "yes" else -1 for lable in predictedlabels]
             targetlabels = [1 if lable == "yes" else -1 for lable in data['y']]
-
+            self.decisionstumps_errors.append(self.calculateErrors(predictedint,targetlabels))
             '''for y in range(len(predictedlabels)):
                 if predictedlabels[y] == "yes":
                     predictedint.append(1)
@@ -324,6 +308,7 @@ if __name__ == '__main__':
     trainingerror = []
     testerrors = []
     T = [x for x in range(1,10)]
+    obj = None
     for i in range(1, 10):
         ad = Adaboost(i)
         ad.fit(dataset)
@@ -332,11 +317,20 @@ if __name__ == '__main__':
         trainingerror.append(Adaboost.calculateErrors(predictedlabels_train, dataset['y']))
         testerrors.append(Adaboost.calculateErrors(predictedlabels_test, testdataset['y']))
         print(i,"           ","%.4f"%trainingerror[i-1],"                   ","%.4f"%testerrors[i-1])
-    plt.plot(T, trainingerror, color='blue', label="Training Errors")
-    plt.plot(T, testerrors, color='red', label="Test Error")
-    plt.xlabel('No. of decision stumps (T)')
-    plt.ylabel('Errors')
-    plt.title("T vs Training/Test error")
-    plt.legend()
+        obj = ad
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
+    ax1.plot(T, trainingerror, color='blue', label="Training Errors")
+    ax1.plot(T, testerrors, color='red', label="Test Error")
+    ax1.set_xlabel('No. of decision stumps (T)')
+    ax1.set_ylabel('Errors')
+    ax1.set_title("T vs Training/Test error")
+    ax1.legend()
+    ax2.plot(T,obj.decisionstumps_errors, color='blue', label="Training Errors")
+    ax2.set_xlabel('decision stump #')
+    ax2.set_ylabel('Errors')
+    ax2.set_title("Error of individual decision stump")
+    ax2.legend()
+    plt.tight_layout()
     plt.show()
 

@@ -6,28 +6,33 @@ import matplotlib.pyplot as plt
 
 
 class StochasticGradientDescent:
-    def __init__(self,lr = 0.01,threshold = 0.000001 ):
+    def __init__(self,lr = 0.01,error_threshold = 0.05 ):
         self.learning_rate = lr
         self.coef = None
         self.intercept = None
-        self.threshold = threshold
+        self.threshold = error_threshold
         self.errors = []
+        self.epochs = 10000
 
     def fit(self,X,y):
         self.intercept = 0
         self.coef = np.ones(X.shape[1])
-        vector_norm = norm(self.coef,2)
-        while vector_norm > self.threshold:
-            old_coef = copy.deepcopy(self.coef)
+        labels = self.predict(X)
+        error = StochasticGradientDescent.calculateerror(y, labels)
+        count = 0
+        while error > self.threshold and count<self.epochs:
             for i in range(X.shape[0]):
                 index = np.random.randint(0,X.shape[0])
                 y_hat = np.dot(X.iloc[index],self.coef) + self.intercept
-                self.errors.append(np.square(y[index] - y_hat))
-                derivate_intercept = -2 * np.mean(y[index] - y_hat)
+                #self.errors.append(np.square(y[index] - y_hat))
+                derivate_intercept = -2 * (y[index] - y_hat)
                 derivative_coefficient = -2 * np.dot((y[index] - y_hat),X.iloc[index])
                 self.coef -= self.learning_rate * derivative_coefficient
                 self.intercept -= self.learning_rate * derivate_intercept
-            vector_norm = norm(self.coef - old_coef, 2)
+            labels = self.predict(X)
+            error = StochasticGradientDescent.calculateerror(y,labels)
+            self.errors.append(error)
+            count += 1
 
     def predict(self,X_test):
         return np.dot(X_test,self.coef) + self.intercept

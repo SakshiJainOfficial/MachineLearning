@@ -103,7 +103,6 @@ class ID3:
 
 
     def fit(self,data, attributeList, depth,no_of_attributes):
-        #print("data size: ", data.shape[0])
         minentropy = 999
         lowest_entropy_attr = None
         labels,counts = np.unique(data['y'],return_counts=True)
