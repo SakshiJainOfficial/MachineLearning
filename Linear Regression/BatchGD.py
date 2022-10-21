@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 from numpy.linalg import norm
+import matplotlib.pyplot as plt
+
+
 class BatchGradientDescent:
     def __init__(self,lr = 0.01,threshold = 0.0000001 ):
         self.learning_rate = lr
@@ -11,7 +14,7 @@ class BatchGradientDescent:
 
     def fit(self,X,y):
         self.intercept = 0
-        self.coef = np.ones(X.shape[1])
+        self.coef = np.ones(X.shape[1],dtype='float64')
         vector_norm = norm(self.coef,2)
         while vector_norm > self.threshold:
             y_hat = np.dot(X,self.coef) + self.intercept
@@ -29,14 +32,34 @@ class BatchGradientDescent:
     def calculateerror(target,predicted):
         return np.mean(np.square(target - predicted))
 
+
 if __name__ == '__main__':
-    bgd = BatchGradientDescent()
-    data = pd.read_csv('./Concrete/train.csv',names = ['Cement','Slag','Fly ash','Water','SP','Coarse Aggr','Fine Aggr','y'])
-    testdata = pd.read_csv('./Concrete/test.csv',names = ['Cement','Slag','Fly ash','Water','SP','Coarse Aggr','Fine Aggr','y'])
-    X = data.iloc[:,:-1]
+    learning_rates = [0.3,0.25,0.125,0.05,0.01]
+    data = pd.read_csv('./Concrete/train.csv',
+                       names=['Cement', 'Slag', 'Fly ash', 'Water', 'SP', 'Coarse Aggr', 'Fine Aggr', 'y'])
+    testdata = pd.read_csv('./Concrete/test.csv',
+                           names=['Cement', 'Slag', 'Fly ash', 'Water', 'SP', 'Coarse Aggr', 'Fine Aggr', 'y'])
+    X = data.iloc[:, :-1]
     y = data['y']
-    X_test = data.iloc[:,:-1]
+    X_test = data.iloc[:, :-1]
     y_test = data['y']
-    bgd.fit(X,y)
-    predicted = bgd.predict(X_test)
-    print(BatchGradientDescent.calculateerror(y_test,predicted))
+    errors = {}
+    count = 0
+    for lr in learning_rates:
+        bgd = BatchGradientDescent(lr)
+        bgd.fit(X,y)
+        predicted = bgd.predict(X_test)
+        print("learning rate: ",lr," Weight Vector: ",bgd.coef," Intercept: ",bgd.intercept," Error(Cost): ",BatchGradientDescent.calculateerror(y_test,predicted))
+        errors[lr] = bgd.errors
+    colors = ['red','maroon','lightcoral','aqua','steelblue','lawngreen']
+
+    for lr in errors:
+        iterations = [x+1 for x in range(len(errors[lr]))]
+        plt.plot(iterations,errors[lr],color = colors[count],label=lr)
+        plt.xscale("log")
+        plt.legend()
+        plt.xlabel("Iterations")
+        plt.ylabel("Cost/Error")
+        plt.title("Cost vs Iterations")
+        count += 1
+    plt.show()
