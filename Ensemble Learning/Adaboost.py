@@ -261,10 +261,8 @@ class Adaboost:
             sum_predicted = np.dot(predicted,self.modelweights)
             predictedlabels.append(np.sign(sum_predicted))
             if sum_predicted>0:
-                #predictedlabels.append(1)
                 predictedyn.append("yes")
             else:
-                #predictedlabels.append(-1)
                 predictedyn.append("no")
             predictions = []
             #predicted = []
@@ -321,7 +319,8 @@ if __name__ == '__main__':
     ax1.set_ylabel('Errors')
     ax1.set_title("T vs Training/Test error")
     ax1.legend()
-    ax2.plot(T,obj.decisionstumps_errors, color='blue', label="Training Errors")
+    ax2.plot(T,obj.decisionstumps_errors, color='blue', label="Training Errors(For Individual Decision Stumps)")
+    ax2.plot(T,obj.decisionstumps_testerror,color= 'red',label ="Test Errors(For Individual Decision Stumps)")
     ax2.set_xlabel('decision stump #')
     ax2.set_ylabel('Errors')
     ax2.set_title("Error of individual decision stump")

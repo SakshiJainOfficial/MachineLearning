@@ -224,10 +224,10 @@ if __name__ == '__main__':
         testdataset[i] = testdataset[i].apply(lambda x: 1 if x > testdataset[i].median() else 0)
     bagged_predictors = []
     first_trees = []
-    for i in range(2):
+    for i in range(100):
         random_indexes = random.sample(range(dataset.shape[0]),1000)
         new_dataset = dataset.iloc[random_indexes]
-        bg = Bagging(2)
+        bg = Bagging(500)
         bg.fit(new_dataset)
         bagged_predictors.append(bg)
         first_trees.append(bg.models[0])
@@ -242,10 +242,10 @@ if __name__ == '__main__':
         variance = 0
         for j in range(len(first_trees)):
             predictions.append(ID3.predict(testdataset.iloc[i],first_trees[j].root))
-            pred = [1 if lable == "yes" else -1 for lable in predictions]
-            target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
-            bias = np.square(np.mean(pred) - target)
-            variance = (np.square(np.mean(targetlabels) - pred))/(len(pred)-1)
+        pred = [1 if lable == "yes" else -1 for lable in predictions]
+        target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
+        bias = np.square(np.mean(pred) - target)
+        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred))
         predictions = []
         biasdt.append(bias)
         variancedt.append(variance)
@@ -262,11 +262,10 @@ if __name__ == '__main__':
     for i in range(len(dataset)):
         bias = 0
         variance = 0
-        for j in range(len(bagged_predictors)):
-            pred = [1 if lable == "yes" else -1 for lable in predictions_bg[j][i]]
-            target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
-            bias = np.square(np.mean(pred) - target)
-            variance = (np.square(np.mean(targetlabels) - pred))/(len(pred)-1)
+        pred = [1 if predictions_bg[lable][i] == "yes" else -1 for lable in predictions_bg]
+        target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
+        bias = np.square(np.mean(pred) - target)
+        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred))
         biasbt.append(bias)
         variancebt.append(variance)
     print("bias for bagged tree predictor: ", np.mean(biasdt))
