@@ -240,12 +240,12 @@ if __name__ == '__main__':
     for i in range(len(testdataset)):
         bias = 0
         variance = 0
-        for j in range(len(first_trees)):
+        for j in range(len(first_trees)):  #for every sample in testdata, predict with every single decision tree
             predictions.append(ID3.predict(testdataset.iloc[i],first_trees[j].root))
         pred = [1 if lable == "yes" else -1 for lable in predictions]
         target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
-        bias = np.square(np.mean(pred) - target)
-        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred))
+        bias = np.square(np.mean(pred) - target)   #calculating bias
+        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred)) #calculating variance
         predictions = []
         biasdt.append(bias)
         variancedt.append(variance)

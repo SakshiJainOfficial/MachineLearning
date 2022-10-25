@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import statistics as st
 from collections import Counter
+import random
 import matplotlib.pyplot as plt
 '''
 features and its values
@@ -104,7 +105,6 @@ class ID3:
 
 
     def fit(self,data, attributeList, depth):
-        #print("data size: ", data.shape[0])
         minentropy = 999
         lowest_entropy_attr = None
         labels,counts = np.unique(data['y'],return_counts=True)
@@ -168,22 +168,22 @@ class ID3:
         return predictedlabels
 
 
-class Bagging:
-    def __init__(self,no_of_trees):
-        self.trees = no_of_trees   #no of tree in our bagging predictor
+class RandomForest:
+    def __init__(self,no_of_trees,feature_size):
+        self.trees = no_of_trees    #no of tree in random forest
         self.models = []
+        self.features_size = feature_size
 
     def fit(self,dataset):
         attributeList = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan', 'contact',
                          'day', 'month',
                          'duration', 'campaign', 'pdays', 'previous', 'poutcome']
         for i in range(self.trees):
-            arr = np.random.uniform(0,dataset.shape[0],int(dataset.shape[0]))  #bootstrapped sampling
-            indexes = [int(i) for i in arr]
-            #print(arr)
+            arr = np.random.uniform(0,dataset.shape[0],int(0.6*dataset.shape[0]))  #bootstrapped sampling
+            indexes = [int(j) for j in arr]
             new_dataset = dataset.iloc[indexes]
             tree = ID3(None,0)
-            tree.fit(new_dataset,copy.deepcopy(attributeList),0) #training our tree on bootstrapped dataset
+            tree.fit(new_dataset,copy.deepcopy(attributeList),0,self.features_size) #fitting data on bootstraped samples
             self.models.append(tree)
 
     @staticmethod
@@ -191,7 +191,7 @@ class Bagging:
         return ID3.predict(data,root)
 
     def my_mode(self,sample):
-        c = Counter(list(sample))
+        c = Counter(sample)
         return [k for k, v in c.items() if v == c.most_common(1)[0][1]][0]
 
     def testdataset(self,testdataset):
@@ -199,7 +199,7 @@ class Bagging:
         final_predictions = []
         for i in range(testdataset.shape[0]):
             for j in range(len(self.models)):
-                predicted_models.append(Bagging.predict(testdataset.iloc[i],self.models[j].root))
+                predicted_models.append(RandomForest.predict(testdataset.iloc[i],self.models[j].root))
             final_predictions.append(self.my_mode(predicted_models))
             predicted_models = []
         return final_predictions
@@ -216,7 +216,7 @@ class Bagging:
 
 if __name__ == '__main__':
     colnames = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan', 'contact', 'day',
-                'month','duration', 'campaign', 'pdays', 'previous', 'poutcome', 'y']
+                'month', 'duration', 'campaign', 'pdays', 'previous', 'poutcome', 'y']
     dataset = pd.read_csv("Bank Dataset/train.csv", names=colnames)
     testdataset = pd.read_csv("Bank Dataset/test.csv", names=colnames)
     for i in dataset.columns[dataset.dtypes == 'int64']:
@@ -224,22 +224,52 @@ if __name__ == '__main__':
 
     for i in testdataset.columns[testdataset.dtypes == 'int64']:
         testdataset[i] = testdataset[i].apply(lambda x: 1 if x > testdataset[i].median() else 0)
-    print("T             training errors           test errors")
-    trainingerror = []
-    testerrors = []
-    T = [x for x in range(1,501)]
-    for i in range(1, 501):
-        bg = Bagging(i)
-        bg.fit(dataset)
-        predictedlabels_train = bg.testdataset(dataset)
-        predictedlabels_test = bg.testdataset(testdataset)
-        trainingerror.append(Bagging.calculateErrors(predictedlabels_train, dataset['y']))
-        testerrors.append(Bagging.calculateErrors(predictedlabels_test, testdataset['y']))
-        print(i,"           ","%.4f"%trainingerror[i-1],"                   ","%.4f"%testerrors[i-1])
-    plt.plot(T,trainingerror,color = 'blue',label = "Training Errors")
-    plt.plot(T,testerrors,color = 'red',label = "Test Error")
-    plt.xlabel('No of trees in bagging (T)')
-    plt.ylabel('Errors')
-    plt.title("T vs Training/Test error")
-    plt.legend()
-    plt.show()
+    bagged_predictors = []
+    first_trees = []
+    for i in range(100):
+        random_indexes = random.sample(range(dataset.shape[0]),1000)
+        new_dataset = dataset.iloc[random_indexes]
+        bg = RandomForest(500)
+        bg.fit(new_dataset)
+        bagged_predictors.append(bg)
+        first_trees.append(bg.models[0])
+    predictions = []
+    biasdt = []
+    variancedt = []
+    targetlabels = [1 if lable == "yes" else -1 for lable in testdataset['y']]
+
+    ## Bias and Variance for single decision tree learners
+    for i in range(len(testdataset)):
+        bias = 0
+        variance = 0
+        for j in range(len(first_trees)):  #for every sample in testdata, predict with every single decision tree
+            predictions.append(ID3.predict(testdataset.iloc[i],first_trees[j].root))
+        pred = [1 if lable == "yes" else -1 for lable in predictions]
+        target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
+        bias = np.square(np.mean(pred) - target)   #calculating bias
+        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred)) #calculating variance
+        predictions = []
+        biasdt.append(bias)
+        variancedt.append(variance)
+    print("bias for single decision tree learner: ",np.mean(biasdt))
+    print("variance for single decision tree learner: ", np.mean(variancedt))
+    print("General squared error: ",np.mean(biasdt)+np.mean(variancedt))
+
+    ## Bias and Variance for Bagged Predictors
+    predictions_bg = {}
+    biasbt = []
+    variancebt = []
+    for i in range(len(bagged_predictors)):
+        predictions_bg[i] = bagged_predictors[i].testdataset(testdataset)
+    for i in range(len(dataset)):
+        bias = 0
+        variance = 0
+        pred = [1 if predictions_bg[lable][i] == "yes" else -1 for lable in predictions_bg]
+        target = 1 if testdataset.iloc[i]['y'] == "yes" else -1
+        bias = np.square(np.mean(pred) - target)
+        variance = sum(np.square(np.mean(targetlabels) - pred))/(len(pred))
+        biasbt.append(bias)
+        variancebt.append(variance)
+    print("bias for bagged tree predictor: ", np.mean(biasdt))
+    print("variance for bagged tree learner: ", np.mean(variancedt))
+    print("General squared error: ", np.mean(biasdt) + np.mean(variancedt))

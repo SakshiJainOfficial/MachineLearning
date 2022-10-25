@@ -121,7 +121,7 @@ class ID3:
             return node
         if len(data) == 0:  # fourth base case - No data present - create leaf node with maximum labels as output
             return TreeNode(None,depth,True,None)
-        selected_attributes = np.random.choice(attributeList,replace = False,size = no_of_attributes)
+        selected_attributes = np.random.choice(attributeList,replace = False,size = no_of_attributes)#randomly selecting attribute for split
         for a in selected_attributes:  # selecting best attribute to divide the tree
             entropy_attr = self.informationgain(data,a)
             if minentropy > entropy_attr:
@@ -168,7 +168,7 @@ class ID3:
 
 class RandomForest:
     def __init__(self,no_of_trees,feature_size):
-        self.trees = no_of_trees
+        self.trees = no_of_trees    #no of tree in random forest
         self.models = []
         self.features_size = feature_size
 
@@ -177,11 +177,11 @@ class RandomForest:
                          'day', 'month',
                          'duration', 'campaign', 'pdays', 'previous', 'poutcome']
         for i in range(self.trees):
-            arr = np.random.uniform(0,dataset.shape[0],int(0.6*dataset.shape[0]))
+            arr = np.random.uniform(0,dataset.shape[0],int(0.6*dataset.shape[0]))  #bootstrapped sampling
             indexes = [int(j) for j in arr]
             new_dataset = dataset.iloc[indexes]
             tree = ID3(None,0)
-            tree.fit(new_dataset,copy.deepcopy(attributeList),0,self.features_size)
+            tree.fit(new_dataset,copy.deepcopy(attributeList),0,self.features_size) #fitting data on bootstraped samples
             self.models.append(tree)
 
     @staticmethod

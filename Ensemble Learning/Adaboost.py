@@ -53,50 +53,6 @@ class ID3:
         self.infogainmethod = infogain
 
     @staticmethod
-    def entropy(labels):  ##entropy calculation
-        label, counts = np.unique(labels, return_counts=True)
-        probabilities = counts / len(labels)
-        logs = np.log2(probabilities)
-        entropyattr = 0
-        for i in range(len(probabilities)):
-            entropyattr -= probabilities[i] * logs[i]
-        return entropyattr
-
-    @staticmethod
-    def gini(labels):
-        label, counts = np.unique(labels, return_counts=True)
-        probabilities = counts / len(labels)
-        probabilitysquare = [probability*probability for probability in probabilities]
-        return 1 - sum(probabilitysquare)
-
-    @staticmethod
-    def weighted_gini(labels,weights):
-        probability = {}
-        uniquelabels = np.unique(labels)
-        for i in uniquelabels:
-            probability[i] = 0
-        for label, weight in zip(labels, weights):
-            probability[label] += weight
-        probabilitysquare = [probability[label]*probability[label] for label in probability]
-        return 1 - sum(probabilitysquare)
-
-    @staticmethod
-    def majorityerror(labels):
-        label,counts = np.unique(labels, return_counts=True)
-        if len(label) == 1:
-            return 0
-        probabilities = counts / len(labels)
-        return min(probabilities)
-
-    def totalEntropy(self, data, attribute):
-        totalentropy = 0
-        func = None
-        for value in attributes[attribute]:
-            value_label = data[data[attribute] == value]['y']
-            totalentropy += (len(value_label) / len(data)) * (ID3.entropy(value_label))
-        return totalentropy
-
-    @staticmethod
     def weightedentropy(data,labels,weights):
         probability = {}
         uniquelabels = np.unique(labels)
@@ -117,27 +73,9 @@ class ID3:
         for value in attributes[attribute]:
             indexes = data.index[data[attribute] == value]
             attr_weights = [weights[i] for i in indexes]
-            #attr_weights = weights.iloc[[data.index[data[attribute] == value]]]
             value_label = data[data[attribute] == value]['y']
             information_gain += (sum(attr_weights)/sum(weights)) * ID3.weightedentropy(data,value_label,attr_weights)
-            #information_gain += (len(value_label) / len(data)) * ID3.weighted_gini(value_label, weights)
-            #information_gain += sum(attr_weights) * ID3.weighted_gini(value_label, weights)
         return information_gain
-
-    def informationgain(self,data,attribute):
-        infogain = 0
-        for value in attributes[attribute]:
-            value_label = data[data[attribute] == value]['y']
-            if self.infogainmethod == 0:
-                infogain += (len(value_label) / len(data)) * (ID3.entropy(value_label))
-            elif self.infogainmethod == 1:
-                infogain += (len(value_label) / len(data)) * (ID3.gini(value_label))
-            else:
-                if len(value_label) == 0:
-                    return 0
-                infogain += (len(value_label) / len(data)) * (ID3.majorityerror(value_label))
-        return infogain
-
 
     def fit(self,data, attributeList, depth, weights):
         minentropy = 999
@@ -219,30 +157,30 @@ class ID3:
 
 class Adaboost:
     def __init__(self,iterations):
-        self.modelweights = []
+        self.modelweights = []     #storing weights(alpha) for different decision stumps
         self.decisionstumps = []
-        self.training_iterations = iterations
+        self.training_iterations = iterations  #no of decision stumps
         self.decisionstumps_errors = []
         self.decisionstumps_testerror = []
 
     def fit(self, data):
-        weights = [1/data.shape[0] for i in range(data.shape[0])]
+        weights = [1/data.shape[0] for i in range(data.shape[0])]  #initializing weights
         attributeList = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing','loan','contact','day','month',
             'duration','campaign','pdays','previous','poutcome']
         predictedlabels = []
         for i in range(self.training_iterations):
-            decisionStump = ID3(1,0)
-            decisionStump.fit(data,copy.deepcopy(attributeList),0,weights)
+            decisionStump = ID3(1,0)  #creating obj of tree with max depth 1.
+            decisionStump.fit(data,copy.deepcopy(attributeList),0,weights)  #fitting data on tree with max depth 1
             self.decisionstumps.append(decisionStump)
-            for j in range(len(data)):
+            for j in range(len(data)):  #using decision stump to predict label for our dataset
                 predictedlabels.append(decisionStump.predict(data.iloc[j],self.decisionstumps[i].root))
             predictedint = [1 if lable == "yes" else -1 for lable in predictedlabels]
             targetlabels = [1 if lable == "yes" else -1 for lable in data['y']]
             self.decisionstumps_errors.append(self.calculateErrors(predictedint,targetlabels))
-            error = sum(weights * (np.not_equal(targetlabels,predictedint)).astype(int))
-            self.modelweights.append(1/2 * np.log((1-error)/error))
-            weights = [weights[x] * np.exp(-self.modelweights[i]*predictedint[x]*targetlabels[x]) for x in range(len(weights))]
-            weights = weights/np.sum(weights)
+            error = sum(weights * (np.not_equal(targetlabels,predictedint)).astype(int)) #calculating error by adding weights of wrongly classified points
+            self.modelweights.append(1/2 * np.log((1-error)/error))  #calculating model weight (alpha)
+            weights = [weights[x] * np.exp(-self.modelweights[i]*predictedint[x]*targetlabels[x]) for x in range(len(weights))] #updating weights according to alpha
+            weights = weights/np.sum(weights)   #normalising weights
             predictedlabels = []
 
     def predict(self,data,root):
@@ -276,6 +214,7 @@ class Adaboost:
                 correctlypredicted += 1
         return 1 - correctlypredicted/len(predictedlabels)
 
+
 if __name__ == '__main__':
     colnames = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan', 'contact', 'day',
                 'month','duration', 'campaign', 'pdays', 'previous', 'poutcome', 'y']
@@ -307,10 +246,6 @@ if __name__ == '__main__':
         predictedint = [1 if lable == "yes" else -1 for lable in predictedlabels_ds]
         targetlabels = [1 if lable == "yes" else -1 for lable in testdataset['y']]
         obj.decisionstumps_testerror.append(Adaboost.calculateErrors(predictedint, targetlabels))
-    print(obj.decisionstumps_testerror)
-    print(obj.decisionstumps_errors)
-    print(trainingerror)
-    print(testerrors)
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
     ax1.plot(T, trainingerror, color='blue', label="Training Errors")
