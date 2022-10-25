@@ -19,12 +19,12 @@ Methods in decision tree -
     predictedlabels: predicted labels from our trained model.
     targetlabels: actual labels from dataset
     
- To train model - 
+ To train model- 
  tree = ID3(None, 0)
  tree.fit(data,attributes)
  
- To test dataset - 
+ To test dataset- 
  predicted = tree.testdataset(testdata)
  
- To calculate errors - 
+ To calculate errors- 
  tree.calculateErrors(predicted,targetlabels)
