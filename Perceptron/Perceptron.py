@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import random
-
+import copy
 class Perceptron:
     def __init__(self):
         self.learning_rate = None
@@ -9,7 +9,7 @@ class Perceptron:
         self.epochs = None
         self.votes = None
 
-    def fit_standardperceptron(self,X,y,lr=0.01,epochs=1000):
+    def fit_standardperceptron(self,X,y,lr=0.01,epochs=100):
         self.learning_rate = lr
         self.epochs = epochs
         X = np.append(np.ones((X.shape[0],1)),X,axis=1)
@@ -20,33 +20,34 @@ class Perceptron:
                 if y[j]*np.dot(self.weights,X[j])<=0:
                     self.weights += self.learning_rate * (y[j]*X[j])
 
-    def fit_votedperceptron(self,X,y,lr = 0.01,epochs = 1000):
+    def fit_votedperceptron(self,X,y,lr = 0.01,epochs = 100):
         self.learning_rate = lr
         self.epochs = epochs
-        m = 1
-        C = [1]
+        m = 0
+        C = [0]
         X = np.append(np.ones((X.shape[0], 1)), X, axis=1)
         self.weights = [np.zeros(X.shape[1])]
         for i in range(self.epochs):
-            indexes = random.sample(range(len(X)), len(X))
-            for j in indexes:
-                if y[j]*np.dot(self.weights[m-1],X[j])<=0:
-                    self.weights.append(self.weights[m-1] + self.learning_rate * (y[j]*X[j]))
+            #indexes = random.sample(range(len(X)), len(X))
+            for j in range(X.shape[0]):
+                if y[j]*np.dot(self.weights[m],X[j])<=0:
+                    new_weights = self.weights[m] + self.learning_rate * (y[j]*X[j])
+                    self.weights.append(new_weights)
                     m += 1
                     C.append(1)
                 else:
-                    C[m-1] += 1
+                    C[m] += 1
         self.votes = np.array(list(zip(self.weights,C)),dtype=object)
 
-    def fit_averageperceptron(self,X,y,lr=0.01,epochs=1000):
+    def fit_averageperceptron(self,X,y,lr=0.01,epochs=100):
         self.learning_rate = lr
         self.epochs = epochs
         X = np.append(np.ones((X.shape[0], 1)), X, axis=1)
         self.weights = np.zeros(X.shape[1])
         w = np.zeros(X.shape[1])
         for i in range(self.epochs):
-            indexes = random.sample(range(len(X)), len(X))
-            for j in indexes:
+            #indexes = random.sample(range(len(X)), len(X))
+            for j in range(X.shape[0]):
                 if y[j]*np.dot(w,X[j])<=0:
                     w += self.learning_rate * (y[j]*X[j])
                 self.weights += w
@@ -64,7 +65,7 @@ class Perceptron:
         for i in range(len(X_test)):
             sum_weights = 0
             for w,c in self.votes:
-                sum_weights = c * np.sign(np.dot(w,X_test[i]))
+                sum_weights += c * np.sign(np.dot(w,X_test[i]))
             predicted.append(np.sign(sum_weights))
         return predicted
 
@@ -93,7 +94,10 @@ if __name__ == "__main__":
     voted = Perceptron()
     voted.fit_votedperceptron(X_train,target,epochs=10)
     predicted_voted = voted.predict_votedperceptron(X_test)
-    print("learned weight vector and their counts - ", voted.votes)
+    print("weight vectors \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t Counts")
+    #print("learned weight vector and their counts - ", voted.votes)
+    for vect in voted.votes:
+        print(f"{vect[0]}\t\t\t\t\t\t{vect[1]}")
     print("Error on test data - ", voted.calculateError(actual_y,predicted_voted))
 
     print("-- AVERAGE PERCEPTRON --")
