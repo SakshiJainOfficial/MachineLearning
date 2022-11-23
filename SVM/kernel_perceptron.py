@@ -32,11 +32,9 @@ class kernel_perceptron:
         self.support_vectors = X_train[svectors]
         self.output = y_train[svectors]
 
-    def predict(self, X_train, y_train, X_test, gamma=None):
+    def predict(self,X_test, gamma=None):
         predicted = []
         X_test = np.array(X_test)
-        X_train = np.array(X_train)
-        y_train = np.array(y_train)
         for j in range(X_test.shape[0]):
             sum = 0
             for i in range(len(self.support_vectors)):
