@@ -1,6 +1,7 @@
 # MachineLearning
 This is a machine learning library developed by Sakshi Jain for
 CS5350/6350 in University of Utah
+
 How to use decision tree?
 DecisionTree.py file contains ID3 class. To create a decision tree, create an object of ID3 class with following parameters -
 
