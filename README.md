@@ -28,6 +28,6 @@ tree.fit(data,attributes)
 
 **To test dataset-**
 predicted = tree.testdataset(testdata)
-
-To calculate errors-
+**
+To calculate errors-**
 tree.calculateErrors(predicted,targetlabels)
