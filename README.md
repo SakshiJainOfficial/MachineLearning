@@ -3,10 +3,15 @@ This is a machine learning library developed by Sakshi Jain for
 CS5350/6350 in University of Utah
 
 How to use decision tree?
-DecisionTree.py file contains ID3 class. To create a decision tree, create an object of ID3 class with following parameters -
+
+DecisionTree.py file contains ID3 class. 
+To create a decision tree, create an object of ID3 class with following parameters -
+
 
 Max Depth -> the maximum depth required for decision tree.(Default Value - None)
+
 Information gain -> How you want to calculate information gain? (Pass 0 - entropy, 1 - gini value, 2 - majority error)
+
 Methods in decision tree -
 
 fit(data,attributeList,depth) data: dataset to train decision tree attributeList: different features(columns) present in our data depth: current depth of decision tree. (Default value = 0)
